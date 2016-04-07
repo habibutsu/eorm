@@ -31,7 +31,7 @@ attrs(Obj) ->
 get_attr(Key, #{attributes:=Attrs} = _Obj) ->
     maps:get(Key, Attrs).
 
-get_attr(Key, #{attributes:=Attrs} = Obj, DefValue) ->
+get_attr(Key, #{attributes:=Attrs}, DefValue) ->
     maps:get(Key, Attrs, DefValue).
 
 set_attr(Key, Value, #{attributes := Attr} = Obj) ->

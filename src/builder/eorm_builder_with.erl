@@ -6,12 +6,12 @@
 ]).
 
 
-build(#{'query' := #{with := []} = Query} = State) ->
+build(#{'query' := #{with := []}} = State) ->
     State;
 
 build(#{
         entity := FromEntity,
-        'query' := #{with := InWith, table := FromTable} = Query,
+        'query' := #{with := InWith, table := FromTable},
         expr := InExpr} = State) ->
     UpdExpr = lists:foldl(
         fun(WithItem, Expr) ->
@@ -40,7 +40,7 @@ build_with({InToType, Query}, FromEntity, FromTable, Expr) ->
 build_with(InToType, FromEntity, FromTable, Expr) ->
     build_with({InToType, #{}}, FromEntity, FromTable, Expr).
 
-build_relation('belongs-to', {ToType, Query}, FromEntity, FromTable, Expr) ->
+build_relation('belongs-to', {ToType, Query}, _FromEntity, FromTable, Expr) ->
     ToEntity = eorm:get_entity(ToType),
     #{pk := ToPk} = ToEntity,
 
@@ -64,7 +64,6 @@ build_relation('has-one', {ToType, Query}, FromEntity, FromTable, Expr) ->
         pk := FromPk
     } = FromEntity,
     ToEntity = eorm:get_entity(ToType),
-    #{pk := ToPk} = ToEntity,
     #{
         'query' := #{table := ToTable},
         expr := UpdExpr

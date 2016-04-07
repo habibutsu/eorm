@@ -50,7 +50,7 @@ row_to_object(Fields, InRow) ->
         Fields),
     eorm_object:append_linked(Objs, Obj).
 
-select_relates(Connection, #{expr:=#{extra_query:=[]}} = State, Objs) ->
+select_relates(_Connection, #{expr:=#{extra_query:=[]}}, Objs) ->
     {ok, Objs};
 select_relates(Connection, State, Objs) ->
     #{
