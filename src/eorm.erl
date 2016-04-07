@@ -64,11 +64,11 @@ get_table(#{table:=Table} = _Entity, _Query) ->
 
 get_connection(#{
         db_connection:=GetFn,
-        adapter:=Adapter} = _Entity, Query) when is_function(GetFn) ->
+        db_adapter:=Adapter} = _Entity, Query) when is_function(GetFn) ->
     {Adapter, GetFn(Query)};
 get_connection(#{
         db_connection:=Connection,
-        adapter:=Adapter} = _Entity, _Query) ->
+        db_adapter:=Adapter} = _Entity, _Query) ->
     {Adapter, Connection};
 get_connection(_Entity, _Query) ->
     throw({bad_entity, no_connection}).
@@ -97,10 +97,10 @@ reflect_table(Entity) ->
 
 def_entity(InType, Entity) ->
     Type = eorm_utils:to_binary(InType),
-    Adapter = maps:get(adapter, Entity, adapter_epgsql),
+    Adapter = maps:get(db_adapter, Entity, adapter_epgsql),
     % normalization
     UpdEntity = reflect_table(Entity#{
-        adapter => Adapter,
+        db_adapter => Adapter,
         relationship => prepare_relationship(Entity),
         type => Type,
         pk => eorm_utils:to_binary(maps:get(pk, Entity, <<"id">>))
