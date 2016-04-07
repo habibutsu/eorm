@@ -7,22 +7,26 @@ select(ReplyType, Query) when not is_map(ReplyType) ->
     Entity = eorm:get_entity(ReplyType),
     select(Entity, Query);
 select(Entity, Query) ->
-    Connection = eorm:get_connection(Entity, {select, Query}),
-    select(Connection, Entity, Query).
+    select(undefined, Entity, Query).
 
 select(Connection, ReplyType, Query) when not is_map(ReplyType) ->
     Entity = eorm:get_entity(ReplyType),
     select(Connection, Entity, Query);
 
-select(Connection, Entity, Query) ->
-    State = eorm_builder_select:build(Entity, Query),
+select(Conn, Entity, InQuery) ->
+    State = eorm_builder_select:build(Entity, InQuery),
     #{
+        'query' := Query,
         expr := #{
             bindings := Bindings,
             sql := SqlQuery,
             fields := Fields
         }
     } = State,
+    Connection = case Conn of
+        undefined -> eorm:get_connection(Entity, {select, Query});
+        _ -> Conn
+    end,
     case Query of
         #{as_sql := true} -> {ok, SqlQuery};
         _ ->
