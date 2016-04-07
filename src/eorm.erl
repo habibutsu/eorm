@@ -46,7 +46,7 @@ prepare_relationship(_Kind, _FromType, {ToType, Field}) ->
 prepare_relationship('has-many', FromType, ToType) ->
     {eorm_utils:to_binary(ToType), <<FromType/binary, "_id">>};
 
-prepare_relationship('belongs-to', FromType, ToType) ->
+prepare_relationship('belongs-to', _FromType, ToType) ->
     BinToType = eorm_utils:to_binary(ToType),
     {BinToType, <<BinToType/binary, "_id">>};
 
@@ -145,35 +145,37 @@ transform(TransformKey, Format, #{type := Type} = Obj) ->
     transform(TransformKey, Format, Obj, Entity).
 
 transform(TransformKey, Format, Obj, Entity) ->
-    #{attributes := Attrs, linked := Linked} = Obj,
+    #{linked := Linked} = Obj,
     case Entity of
         #{TransformKey := #{Format := Transforms}} ->
-            UpdAttrs = transform_attrs(Transforms, Attrs),
+            UpdObj = transform_obj(Transforms, Obj),
             UpdLinked = maps:map(
                 fun(_K, V) ->
                     lists:map(fun(LObj) -> transform(TransformKey, Format, LObj) end, V)
                 end,
                 Linked),
-            Obj#{attributes => UpdAttrs, linked := UpdLinked};
+            UpdObj#{linked := UpdLinked};
         _ ->
             Obj
     end.
 
-transform_attrs(Transforms, Attrs) when is_list(Transforms) ->
+transform_obj(Transforms, Obj) when is_list(Transforms) ->
     lists:foldl(
-        fun(Transform, AttrsIn) -> transform_attrs(Transform, AttrsIn) end,
-        Attrs,
+        fun(Transform, InObj) -> transform_obj(Transform, InObj) end,
+        Obj,
         Transforms);
 
-transform_attrs(Transform, Attrs) when is_function(Transform)->
-    Transform(Attrs);
+transform_obj(Transform, Obj) when is_function(Transform)->
+    Transform(Obj);
 
-transform_attrs(Transform, Attrs) when is_map(Transform)->
-    maps:fold(
+transform_obj(Transform, Obj) when is_map(Transform)->
+    Attrs = eorm_object:attrs(Obj),
+    UpdAttrs = maps:fold(
         fun(Key, Fn, AttrsIn) ->
             case maps:get(Key, AttrsIn, undefined) of
                 undefined -> AttrsIn;
                 V -> AttrsIn#{Key => Fn(V)}
             end
         end,
-        Attrs, Transform).
+        Attrs, Transform),
+    eorm_object:set_attrs(UpdAttrs, Obj).

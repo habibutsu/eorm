@@ -96,7 +96,22 @@ init() ->
         'transform-to' => #{
             'db' => #{
                 <<"data">> => fun compress/1
-            }
+            },
+            json => [
+                fun(Obj) ->
+                    Obj#{meta => #{
+                        <<"info">> => <<"example of transformation whole object">>}}
+                end,
+                #{
+                    <<"created_at">> => fun(DateTime) ->
+                        {{Year,Month,Day},{Hour,Min,Sec}} = DateTime,
+                        iolist_to_binary(
+                            io_lib:format(
+                                "~.4.0w-~.2.0w-~.2.0wT~.2.0w:~.2.0w:~.2.0fZ",
+                                [Year, Month, Day, Hour, Min, Sec]))
+                    end
+                }
+            ]
         },
         callbacks => #{
             prepare_obj_statement => fun(Obj, {_Kind, Query}) ->

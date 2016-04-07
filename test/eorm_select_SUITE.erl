@@ -14,6 +14,7 @@ all() -> [
     ,select_has_one_test
     ,select_belongs_to_test
     ,select_relates_has_many_test
+    ,select_and_transformation_test
 ].
 
 init_per_suite(Config) ->
@@ -162,4 +163,15 @@ select_relates_has_many_test(_Config) ->
             }
         }),
     ct:log("UserObj: ~p", [UserObj]),
+    ok.
+
+select_and_transformation_test(_Config) ->
+    {ok, [Obj]} = eorm_db:select(
+        post, #{
+            where => #{
+                id => 1
+            }
+        }),
+    JsonObj = eorm:transform_to(json, Obj),
+    ct:log("JsonObj: ~p", [JsonObj]),
     ok.

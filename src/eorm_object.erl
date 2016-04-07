@@ -31,6 +31,9 @@ set_linked(Linked, Obj) ->
 attrs(Obj) ->
     maps:get(attributes, Obj).
 
+set_attrs(NewAttrs, Obj) ->
+    Obj#{attributes => NewAttrs}.
+
 attr(Key, Obj) ->
     get_attr(Key, Obj).
 
