@@ -5,7 +5,15 @@ Before start using of library is needed define entities. Entity - this is a
 representation relation from db and can be defined in following simplest way:
 
 ```erlang
+
+{ok, Conn} = epgsql:connect(
+    "127.0.0.1", "dbuser", "dbpassword", [
+        {database, "testdb"},
+        {timeout, 4000}
+]),
+
 eorm:def_entity(user, #{
+    db_connection => Conn,
     table => users
 }).
 ```
