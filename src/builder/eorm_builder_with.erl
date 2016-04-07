@@ -32,15 +32,15 @@ build_sql(#{expr:=#{sql := SQL, joins := Joins} = Expr} = State) ->
 
 
 build_with({InToType, Query}, FromEntity, FromTable, Expr) ->
-    #{relationship := Relationship} = FromEntity,
+    #{relationships := Relationships} = FromEntity,
     ToType = eorm_utils:to_binary(InToType),
-    RelationType = maps:get(ToType, Relationship, undefined),
-    build_relation(RelationType, {ToType, Query}, FromEntity, FromTable, Expr);
+    Relation = maps:get(ToType, Relationships, undefined),
+    build_relation(Relation, {ToType, Query}, FromEntity, FromTable, Expr);
 
 build_with(InToType, FromEntity, FromTable, Expr) ->
     build_with({InToType, #{}}, FromEntity, FromTable, Expr).
 
-build_relation('belongs-to', {ToType, Query}, _FromEntity, FromTable, Expr) ->
+build_relation({'belongs-to', RelationKey}, {ToType, Query}, _FromEntity, FromTable, Expr) ->
     ToEntity = eorm:get_entity(ToType),
     #{pk := ToPk} = ToEntity,
 
@@ -51,14 +51,14 @@ build_relation('belongs-to', {ToType, Query}, _FromEntity, FromTable, Expr) ->
 
     Join = <<"left join ",
         ToTable/binary, " on ",
-        FromTable/binary, ".", ToType/binary, "_", ToPk/binary, " = ",
+        FromTable/binary, ".", RelationKey/binary, " = ",
         ToTable/binary, ".", ToPk/binary>>,
 
     #{joins := Joins} = UpdExpr,
     UpdExpr#{joins => Joins ++ [Join]};
 
 
-build_relation('has-one', {ToType, Query}, FromEntity, FromTable, Expr) ->
+build_relation({'has-one', RelationKey}, {ToType, Query}, FromEntity, FromTable, Expr) ->
     #{
         type := FromType,
         pk := FromPk
@@ -72,13 +72,13 @@ build_relation('has-one', {ToType, Query}, FromEntity, FromTable, Expr) ->
     Join = <<"left join ",
         ToTable/binary, " on ",
         FromTable/binary, ".", FromPk/binary, " = ",
-        ToTable/binary, ".", FromType/binary, "_", FromPk/binary>>,
+        ToTable/binary, ".", RelationKey/binary>>,
 
     #{joins := Joins} = UpdExpr,
     UpdExpr#{joins => Joins ++ [Join]};
 
-build_relation('has-many', {ToType, Query}, _FromEntity, _FromTable, #{extra_query := ExtraQuery} = Expr) ->
-    Expr#{extra_query => ExtraQuery ++ [{ToType, Query}]};
+build_relation({'has-many', RelationKey}, {ToType, Query}, _FromEntity, _FromTable, #{extra_query := ExtraQuery} = Expr) ->
+    Expr#{extra_query => ExtraQuery ++ [{ToType, RelationKey, Query}]};
 
 build_relation(undefined, {ToType, _Query}, #{type:=FromType} = _FromEntity, _FromTable, _Expr) ->
     throw({no_relationship, {FromType, ToType}}).

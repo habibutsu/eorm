@@ -33,6 +33,7 @@ select(Connection, Entity, Query) ->
                         fun(Row) -> row_to_object(Fields, Row) end, Rows),
                     {ok, Objs}
                 end
+                % TODO: add supporting as_sql
                 ,erlz:partial(fun select_relates/3, [Connection, State])
             ])
     end.
@@ -52,28 +53,20 @@ row_to_object(Fields, InRow) ->
 
 select_relates(_Connection, #{expr:=#{extra_query:=[]}}, Objs) ->
     {ok, Objs};
-select_relates(Connection, State, Objs) ->
-    #{
-        entity := #{
-            type := FromType,
-            pk := FromPk
-        },
-        expr:=#{extra_query:=ExtraQuery}} = State,
+select_relates(Connection, #{expr:=#{extra_query:=ExtraQuery}} = _State, Objs) ->
     Ids = lists:map(fun eorm_object:id/1, Objs),
 
-    RelatesKey = <<FromType/binary, "_", FromPk/binary>>,
-    erlz:error_do([
-        fun() ->
-            erlz:error_traverse(
-                fun({Type, Query}) ->
-                    Where = maps:get(where, Query, #{}),
-                    select(Connection, Type,
-                        Query#{where => Where#{{RelatesKey, in} => Ids}})
-                end,
-                ExtraQuery)
+    erlz:error_foldlM(
+        fun({Type, RelationKey, Query}, InObjs) ->
+            Where = maps:get(where, Query, #{}),
+            UpdQuery = Query#{where => Where#{{RelationKey, in} => Ids}},
+            erlz:error_do([
+                fun() -> select(Connection, Type, UpdQuery) end,
+                erlz:partial(fun append_relates/3, [InObjs, RelationKey, '_'])
+            ])
         end,
-        erlz:partial(fun append_relates/3, [Objs, RelatesKey])
-    ]).
+        Objs,
+        ExtraQuery).
 
 append_relates(InObjs, RelatesKey, RelatesObjs) ->
     % by relations

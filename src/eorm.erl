@@ -40,18 +40,31 @@ cb_prepare_obj_statement(
 cb_prepare_obj_statement(_Entity, _Obj, {_Kind, Query}) ->
     Query.
 
-prepare_relationship(Entity) ->
+prepare_relationship(_Kind, _FromType, {ToType, Field}) ->
+    {eorm_utils:to_binary(ToType), eorm_utils:to_binary(Field)};
+
+prepare_relationship('has-many', FromType, ToType) ->
+    {eorm_utils:to_binary(ToType), <<FromType/binary, "_id">>};
+
+prepare_relationship('belongs-to', FromType, ToType) ->
+    BinToType = eorm_utils:to_binary(ToType),
+    {BinToType, <<BinToType/binary, "_id">>};
+
+prepare_relationship('has-one', FromType, ToType) ->
+    BinToType = eorm_utils:to_binary(ToType),
+    {BinToType, <<FromType/binary, "_id">>}.
+
+prepare_relationships(#{type:=FromType} = Entity) ->
     lists:foldl(
         fun(Kind, Acc) ->
-            Types = lists:map(fun eorm_utils:to_binary/1,
-                maps:get(Kind, Entity, [])),
-            Length = length(Types),
-            maps:merge(
+            ToTypes = maps:get(Kind, Entity, []),
+            lists:foldl(
+                fun(ToType, InAcc) ->
+                    {T, F} = prepare_relationship(Kind, FromType, ToType),
+                    InAcc#{T => {Kind, F}}
+                end,
                 Acc,
-                maps:from_list(
-                    lists:zip(
-                        Types,
-                        lists:duplicate(Length, Kind))))
+                ToTypes)
         end,
         #{},
         ['has-many', 'has-one', 'belongs-to']).
@@ -95,14 +108,14 @@ reflect_table(Entity) ->
             throw({error_reflect, Reason})
     end.
 
-def_entity(InType, Entity) ->
+def_entity(InType, InEntity) ->
     Type = eorm_utils:to_binary(InType),
+    Entity = InEntity#{type => Type},
     Adapter = maps:get(db_adapter, Entity, adapter_epgsql),
     % normalization
     UpdEntity = reflect_table(Entity#{
         db_adapter => Adapter,
-        relationship => prepare_relationship(Entity),
-        type => Type,
+        relationships => prepare_relationships(Entity),
         pk => eorm_utils:to_binary(maps:get(pk, Entity, <<"id">>))
     }),
     true = ets:insert(?MODULE, {{type, Type}, UpdEntity}).

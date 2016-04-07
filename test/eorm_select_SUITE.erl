@@ -6,10 +6,12 @@
 
 all() -> [
     select_limit_offset_order_by_test
+    ,select_order_by_multiple_test
     ,select_where_in_test
     ,select_where_any_test
     ,select_where_greater_test
     ,select_group_by_test
+    ,select_has_one_test
     ,select_belongs_to_test
     ,select_relates_has_many_test
 ].
@@ -33,6 +35,16 @@ select_limit_offset_order_by_test(_Config) ->
     ct:log("SQL: ~p", [SQL]),
     ct:log("Objs: ~p", [Objs]),
     [3,2] = lists:map(fun eorm_object:id/1, Objs),
+    ok.
+
+select_order_by_multiple_test(_Config) ->
+    Query = #{
+        order_by => [priority, name]
+    },
+    {ok, SQL} = eorm_db:select(user, Query#{as_sql => true}),
+    {ok, Objs} = eorm_db:select(user, Query),
+    ct:log("SQL: ~p", [SQL]),
+    ct:log("Objs: ~p", [Objs]),
     ok.
 
 select_where_in_test(_Config) ->
@@ -113,11 +125,27 @@ select_belongs_to_test(_Config) ->
     ct:log("Objs: ~p", [Objs]),
     ok.
 
+
+select_has_one_test(_Config) ->
+    Query = #{
+        with => [email],
+        where => #{
+            id => 1
+        }
+    },
+    {ok, SQL} = eorm_db:select(user, Query#{as_sql => true}),
+    {ok, [Obj]} = eorm_db:select(user, Query),
+    ct:log("SQL: ~p", [SQL]),
+    ct:log("Obj: ~p", [Obj]),
+    [EmailObj] = eorm_object:linked(<<"email">>, Obj),
+    <<"user1@domain">> = eorm_object:attr(<<"email">>, EmailObj),
+    ok.
+
 select_relates_has_many_test(_Config) ->
     {ok, Objs} = eorm_db:select(
         post, #{
             with => [
-                post_action_log
+                {post_action_log, #{where=> #{action => <<"edited">>}}}
             ],
             where => #{
                 user_id => 1
@@ -125,4 +153,13 @@ select_relates_has_many_test(_Config) ->
         }),
     ct:log("Objs: ~p", [Objs]),
     5 = length(Objs),
+
+    {ok, [UserObj]} = eorm_db:select(
+        user, #{
+            with => [post],
+            where => #{
+                id => 1
+            }
+        }),
+    ct:log("UserObj: ~p", [UserObj]),
     ok.

@@ -53,7 +53,15 @@ init() ->
         db_connection => Conn1,
         table => users,
         pk => id,
-        'has-many' => [post]
+        'has-many' => [post],
+        'has-one' => [email]
+    }),
+
+    eorm:def_entity(email, #{
+        db_connection => Conn1,
+        table => user_emails,
+        pk => id,
+        'belongs-to' => [user]
     }),
 
     eorm:def_entity(post, #{
@@ -72,8 +80,14 @@ init() ->
             end
         end,
         pk => id,
-        'belongs-to' => [user],
-        'has-many' => [post_action_log],
+        'belongs-to' => [
+            user,
+            % and the same but with specifying of field
+            {user, user_id}
+        ],
+        'has-many' => [
+            {post_action_log, action_post_id}
+        ],
         'transform-from' => #{
             'db' => #{
                 <<"data">> => fun decompress/1

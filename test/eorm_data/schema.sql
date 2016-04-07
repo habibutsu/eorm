@@ -11,6 +11,14 @@ insert into users (priority, name) values(3, 'user3');
 insert into users (priority, name) values(4, 'user4');
 insert into users (priority, name) values(5, 'user5');
 
+create table user_emails (
+    id serial,
+    user_id integer not null references users (id) on delete cascade,
+    email character varying(64) not null,
+    primary key (id)
+);
+
+insert into user_emails (user_id, email) values(1, 'user1@domain');
 
 create table posts (
     id serial,
@@ -48,23 +56,23 @@ insert into posts_02 (user_id, likes) values(2, 2);
 
 create table post_actions_log (
     id serial,
-    post_id integer not null,
+    action_post_id integer not null,
     created_at timestamp without time zone default now(),
     action character varying(64) not null,
     primary key (id)
 );
 
-insert into post_actions_log (post_id, action) values(1, 'created');
-insert into post_actions_log (post_id, action) values(1, 'edited');
-insert into post_actions_log (post_id, action) values(1, 'edited');
+insert into post_actions_log (action_post_id, action) values(1, 'created');
+insert into post_actions_log (action_post_id, action) values(1, 'edited');
+insert into post_actions_log (action_post_id, action) values(1, 'edited');
 
-insert into post_actions_log (post_id, action) values(2, 'created');
-insert into post_actions_log (post_id, action) values(2, 'edited');
-insert into post_actions_log (post_id, action) values(2, 'edited');
+insert into post_actions_log (action_post_id, action) values(2, 'created');
+insert into post_actions_log (action_post_id, action) values(2, 'edited');
+insert into post_actions_log (action_post_id, action) values(2, 'edited');
 
-insert into post_actions_log (post_id, action) values(3, 'created');
-insert into post_actions_log (post_id, action) values(3, 'edited');
-insert into post_actions_log (post_id, action) values(3, 'edited');
+insert into post_actions_log (action_post_id, action) values(3, 'created');
+insert into post_actions_log (action_post_id, action) values(3, 'edited');
+insert into post_actions_log (action_post_id, action) values(3, 'edited');
 
 create table tags (
     id serial,
