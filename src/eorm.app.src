@@ -1,0 +1,12 @@
+{application, eorm, [
+    {description, "Erlang ORM"},
+    {vsn, "0.1"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib,
+        epgsql
+    ]},
+    {env,[]},
+    {modules, []}
+]}.
