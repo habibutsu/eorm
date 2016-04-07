@@ -68,5 +68,5 @@ init_db() ->
 
 clean_db() ->
     {ok, Conn} = new_connection(),
-    Result = epgsql:squery(Conn, "drop owned by dbuser cascade"),
+    _Result = epgsql:squery(Conn, "drop owned by dbuser cascade"),
     ok.

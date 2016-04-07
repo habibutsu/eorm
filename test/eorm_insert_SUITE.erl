@@ -15,7 +15,7 @@ end_per_suite(Config) ->
     test_utils:end_per_suite(Config).
 
 
-insert_test(Config) ->
+insert_test(_Config) ->
     Obj = eorm_object:new(post, #{
         <<"user_id">> => 1,
         <<"data">> => <<"test">>

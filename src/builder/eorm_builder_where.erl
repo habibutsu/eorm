@@ -9,8 +9,6 @@ build(#{'query' := #{where := Where}} = State) when map_size(Where) == 0 ->
     State;
 
 build(#{'query' := #{where := Where, table := Table}, expr := Expr} = State) ->
-    #{where := ExprWhere} = Expr,
-
     UpdExpr = maps:fold(
         erlz:partial(fun build_condition/4, [Table]),
         Expr,

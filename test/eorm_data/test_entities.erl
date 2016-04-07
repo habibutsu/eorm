@@ -85,14 +85,14 @@ init() ->
             }
         },
         callbacks => #{
-            prepare_obj_statement => fun(Obj, {Kind, Query}) ->
-                % Kind :: select | update | insert | delete
+            prepare_obj_statement => fun(Obj, {_Kind, Query}) ->
+                % Kind :: update | insert | delete
                 UserId = eorm_object:get_attr(<<"user_id">>, Obj),
                 ChunkId = ((UserId + 1) rem ?MAX_CHUNKS) + 1,
                 Query#{meta => #{chunk_id => ChunkId}}
             end,
             prepare_statement => fun({_Kind, Query}) ->
-                % Kind :: select | update | insert | delete
+                % Kind :: select
                 case Query of
                     #{where := #{user_id := UserId}} ->
                         ChunkId = ((UserId + 1) rem ?MAX_CHUNKS) + 1,
