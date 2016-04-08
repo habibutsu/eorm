@@ -108,6 +108,18 @@ select_group_by_test(_Config) ->
     {ok, Objs} = eorm_db:select(post, Query),
     ct:log("SQL: ~p", [SQL]),
     ct:log("Objs: ~p", [Objs]),
+
+    QueryWithList = #{
+        fields => [
+            {sql, <<"count(*)">>}
+        ],
+        group_by => [name, priority]
+    },
+
+    {ok, SQL2} = eorm_db:select(user, QueryWithList#{as_sql => true}),
+    {ok, Objs2} = eorm_db:select(user, QueryWithList),
+    ct:log("SQL: ~p", [SQL2]),
+    ct:log("Objs: ~p", [Objs2]),
     ok.
 
 select_belongs_to_test(_Config) ->

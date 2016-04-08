@@ -11,7 +11,8 @@ build_sql(#{
             eorm_utils:binary_join(
                 lists:map(fun(Column) ->
                         <<Table/binary, ".", (eorm_utils:to_binary(Column))/binary>>
-                    end),
+                    end,
+                    Columns),
                     <<",">>);
         _ ->
             <<Table/binary, ".", (eorm_utils:to_binary(Columns))/binary>>
